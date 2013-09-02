@@ -12,7 +12,7 @@ import (
 	"github.com/goinggo/newssearch/helper"
 	"github.com/goinggo/newssearch/plugins/expression"
 	"github.com/goinggo/newssearch/rss"
-	"github.com/goinggo/utilities/v1.0.0/workpool"
+	"github.com/goinggo/utilities/v1/workpool"
 	"io"
 	"os"
 	"path/filepath"
