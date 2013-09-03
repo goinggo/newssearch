@@ -239,9 +239,9 @@ func (this *_Search) PerformSearch(goRoutine string, searchPlugin SearchPlugin) 
 	helper.WriteStdout(goRoutine, "search._Search", "PerformSearch", "Completed")
 }
 
-// PerformSearch is called to perform the work from the search pool
+// DoWork is called to perform the work from the search pool
 //  workRoutine: The internal id of the work routine making the call
-func (this *_SearchWork) DoSearch(workRoutine int) {
+func (this *_SearchWork) DoWork(workRoutine int) {
 
 	var results interface{}
 
