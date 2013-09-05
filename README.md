@@ -12,3 +12,12 @@ bill@ardanstudios.com
 
 GoingGo.net Post:  
 http://www.goinggo.net/2013/07/an-rss-feed-searching-framework-using-go.html
+
+	-- Get, build and install the code
+	export GOPATH=$HOME/goinggo
+	go get github.com/goinggo/newssearch
+	
+	-- Run the code
+	cd $GOPATH/bin
+	** Copy the feeds.list file to bin
+	./newssearch

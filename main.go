@@ -7,9 +7,9 @@
 	Any matches that are found is returned to the user. The application provides frameworks for
 	creating plugable code, channel communication, and the use of ArdanStudios/workpool.
 
-	Ardan Studios<br />
-	12973 SW 112 ST, Suite 153<br />
-	Miami, FL 33186<br />
+	Ardan Studios
+	12973 SW 112 ST, Suite 153
+	Miami, FL 33186
 	bill@ardanstudios.com
 
 	GoingGo.net Post:
