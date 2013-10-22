@@ -29,14 +29,14 @@ type SearchPlugin interface {
 
 //** NEW TYPES
 
-// _Search manages state for the searching engine
-type _Search struct {
+// search manages state for the searching engine
+type search struct {
 	WorkPool *workpool.WorkPool // A workPool to process the searches
 	FeedList *list.List         // The list of RSS feeds to process
 }
 
-// _SearchWork is used to post search work into the work pool
-type _SearchWork struct {
+// searchWork is used to post search work into the work pool
+type searchWork struct {
 	SP           *workpool.WorkPool // Reference to the work pool
 	Wait         chan interface{}   // Channel used to receive the result of the search
 	Url          string             // The RSS Feed url
@@ -52,31 +52,28 @@ type _SearchWork struct {
 //  pluginType: The type of search plugin to use
 //  parameters: The parameters for the command
 func Run(goRoutine string, routines int, pluginType string, parameters []string) {
-
 	defer helper.CatchPanic(nil, goRoutine, "search", "Run")
 
 	helper.WriteStdout(goRoutine, "search", "Run", "Started")
 
 	// Create a search plugin to process the search
-	searchPlugin, err := _CreateSearchPlugin(goRoutine, pluginType, parameters)
+	searchPlugin, err := createSearchPlugin(goRoutine, pluginType, parameters)
 
 	if err != nil {
-
 		helper.WriteStdoutf(goRoutine, "search", "Run", "ERROR : %s", err)
 		return
 	}
 
 	// Capture the list of feeds to process
-	feedList, err := _LoadFeedsList(goRoutine)
+	feedList, err := loadFeedsList(goRoutine)
 
 	if err != nil {
-
 		helper.WriteStdoutf(goRoutine, "search", "Run", "ERROR : %s", err)
 		return
 	}
 
 	// Create a search object
-	search := &_Search{
+	search := &search{
 		WorkPool: workpool.New(routines, int32(feedList.Len())),
 		FeedList: feedList,
 	}
@@ -93,7 +90,6 @@ func Run(goRoutine string, routines int, pluginType string, parameters []string)
 // DisplayHelpExamples displays the examples for each searchPlugin
 //  goRoutine: The Go routine making the call
 func DisplayHelpExamples(goRoutine string) {
-
 	// TODO: Add new searchPlugin help examples here
 
 	helper.WriteStdoutf(goRoutine, "search", "DisplayHelpExamples", "Example : %s", expression.HelpParameters())
@@ -101,10 +97,9 @@ func DisplayHelpExamples(goRoutine string) {
 
 //** PRIVATE FUNCTIONS
 
-// _LoadFeedsList reads the feeds.list file and returns the list of feed urls
+// loadFeedsList reads the feeds.list file and returns the list of feed urls
 //  goRoutine: The Go routine making the call
-func _LoadFeedsList(goRoutine string) (feedList *list.List, err error) {
-
+func loadFeedsList(goRoutine string) (feedList *list.List, err error) {
 	defer helper.CatchPanic(&err, goRoutine, "search", "_LoadFeedsList")
 
 	var file *os.File
@@ -120,13 +115,11 @@ func _LoadFeedsList(goRoutine string) (feedList *list.List, err error) {
 
 	// Was there a problem opening the file
 	if err != nil {
-
 		helper.WriteStdoutf(goRoutine, "search", "_LoadFeedsList", "ERROR : %s", err)
 		return nil, err
 	}
 
 	defer func() {
-
 		file.Close()
 		helper.WriteStdout(goRoutine, "search", "_LoadFeedsList", "Closing File : Defer Completed")
 	}()
@@ -139,15 +132,12 @@ func _LoadFeedsList(goRoutine string) (feedList *list.List, err error) {
 
 	// Read every line and store it
 	for {
-
 		// Read a line from the file
 		line, err = reader.ReadString('\n')
 
 		// Was there a problem reading the file
 		if err != nil {
-
 			if err == io.EOF {
-
 				err = nil
 				break
 			}
@@ -169,12 +159,11 @@ func _LoadFeedsList(goRoutine string) (feedList *list.List, err error) {
 	return feedList, err
 }
 
-// _CreateSearchPlugin will create an object of the specified searchPlugin type
+// createSearchPlugin will create an object of the specified searchPlugin type
 //  goRoutine: The Go routine making the call
 //  pluginType: The type of search plugin to use
 //  parameters: The parameters for the command
-func _CreateSearchPlugin(goRoutine string, pluginType string, parameters []string) (searchPlugin SearchPlugin, err error) {
-
+func createSearchPlugin(goRoutine string, pluginType string, parameters []string) (searchPlugin SearchPlugin, err error) {
 	// TODO: Add new search plugin types here
 
 	switch pluginType {
@@ -194,11 +183,10 @@ func _CreateSearchPlugin(goRoutine string, pluginType string, parameters []strin
 // PerformSearch performs all business logic related to searching the feeds
 //  goRoutine: The Go routine making the call
 //  search: The searchPlugin to use when performing the search
-func (this *_Search) PerformSearch(goRoutine string, searchPlugin SearchPlugin) {
-
+func (this *search) PerformSearch(goRoutine string, searchPlugin SearchPlugin) {
 	defer helper.CatchPanic(nil, goRoutine, "search", "PerformSearch")
 
-	helper.WriteStdout(goRoutine, "search._Search", "PerformSearch", "Started")
+	helper.WriteStdout(goRoutine, "search.search", "PerformSearch", "Started")
 
 	// Capture the number of feeds to process
 	numberOfFeeds := this.FeedList.Len()
@@ -212,9 +200,8 @@ func (this *_Search) PerformSearch(goRoutine string, searchPlugin SearchPlugin) 
 
 	// Post search work for each feed in the list
 	for element := this.FeedList.Front(); element != nil; element = element.Next() {
-
 		// Prepare to run the search
-		searchWork := &_SearchWork{
+		searchWork := &searchWork{
 			SP:           this.WorkPool,
 			Wait:         wait,
 			Url:          element.Value.(string),
@@ -225,28 +212,25 @@ func (this *_Search) PerformSearch(goRoutine string, searchPlugin SearchPlugin) 
 		this.WorkPool.PostWork(goRoutine, searchWork)
 	}
 
-	helper.WriteStdout(goRoutine, "search._Search", "PerformSearch", "Info : Waiting For Feeds To Complete")
+	helper.WriteStdout(goRoutine, "search.search", "PerformSearch", "Info : Waiting For Feeds To Complete")
 
 	// Wait for each feed to signal they are done
 	for feed := 0; feed < numberOfFeeds; feed++ {
-
 		searchResults[feed] = <-wait
 	}
 
 	// Display the results
 	searchPlugin.DisplayResults(goRoutine, searchResults)
 
-	helper.WriteStdout(goRoutine, "search._Search", "PerformSearch", "Completed")
+	helper.WriteStdout(goRoutine, "search.search", "PerformSearch", "Completed")
 }
 
 // DoWork is called to perform the work from the search pool
 //  workRoutine: The internal id of the work routine making the call
-func (this *_SearchWork) DoWork(workRoutine int) {
-
+func (this *searchWork) DoWork(workRoutine int) {
 	var results interface{}
 
 	defer func() {
-
 		// Signal that we are done
 		this.Wait <- results
 	}()
@@ -254,19 +238,18 @@ func (this *_SearchWork) DoWork(workRoutine int) {
 	// Create the name of the Go routine this is being processed in
 	goRoutine := fmt.Sprintf("Work Routine %d", workRoutine)
 
-	helper.WriteStdoutf(goRoutine, "search._Search", "DoSearch", "Started : QW: %d  AR: %d", this.SP.QueuedWork(), this.SP.ActiveRoutines())
+	helper.WriteStdoutf(goRoutine, "search.search", "DoSearch", "Started : QW: %d  AR: %d", this.SP.QueuedWork(), this.SP.ActiveRoutines())
 
 	// Retrieve the RSS feed document
 	rssDocument, err := rss.RetrieveRssFeed(goRoutine, this.Url)
 
 	if err != nil {
-
-		helper.WriteStdoutf(goRoutine, "search._Search", "DoSearch", "ERROR - Completed : %s", err)
+		helper.WriteStdoutf(goRoutine, "search.search", "DoSearch", "ERROR - Completed : %s", err)
 		return
 	}
 
 	// Use the search plugin to find the results
 	results = this.SearchPlugin.FindResults(goRoutine, rssDocument)
 
-	helper.WriteStdoutf(goRoutine, "search._Search", "DoSearch", "Completed : QW: %d  AR: %d", this.SP.QueuedWork(), this.SP.ActiveRoutines())
+	helper.WriteStdoutf(goRoutine, "search.search", "DoSearch", "Completed : QW: %d  AR: %d", this.SP.QueuedWork(), this.SP.ActiveRoutines())
 }

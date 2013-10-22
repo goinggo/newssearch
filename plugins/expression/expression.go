@@ -25,20 +25,20 @@ import (
 
 // Expression performs regular expression matching
 type Expression struct {
-	_Parameters []string
+	parameters []string
 }
 
-// _SearchMatch contains the result of a successful match
-type _SearchMatch struct {
+// searchMatch contains the result of a successful match
+type searchMatch struct {
 	Expression string      // The expression that was matched
 	Field      string      // The field that was matched in the rss document
 	Document   rss.RSSItem // The item document that was matched
 }
 
-// _SearchResult contains the result of a search
-type _SearchResult struct {
+// searchResult contains the result of a search
+type searchResult struct {
 	Uri     string     // The feed uri that was processed
-	Matches *list.List // A list of the _SearchMatch objects
+	Matches *list.List // A list of the searchMatch objects
 }
 
 //** PUBLIC FUNCTIONS
@@ -46,18 +46,16 @@ type _SearchResult struct {
 // New creates a new expression search plugin
 //  goRoutine: The Go routine making the call
 func New(goRoutine string, parameters []string) (expression *Expression, err error) {
-
 	// Check the parameters are valid
-	result := _CheckParameters(parameters)
+	result := checkParameters(parameters)
 
 	if result == false {
-
 		return nil, errors.New("Invalid _Parameters")
 	}
 
 	// Create an expression search plugin
 	expression = &Expression{
-		_Parameters: parameters,
+		parameters: parameters,
 	}
 
 	return expression, nil
@@ -65,7 +63,6 @@ func New(goRoutine string, parameters []string) (expression *Expression, err err
 
 // HelpParameters provides command useage help
 func HelpParameters() (message string) {
-
 	return "newssearch 8 expression (?i)spy"
 }
 
@@ -73,8 +70,7 @@ func HelpParameters() (message string) {
 
 // CheckParameters reviews the parameters to make sure they are compatible
 //  parameters: The parameters from the command line
-func _CheckParameters(parameters []string) (result bool) {
-
+func checkParameters(parameters []string) (result bool) {
 	// We accept any parameters
 
 	return true
@@ -88,40 +84,33 @@ func _CheckParameters(parameters []string) (result bool) {
 //  goRoutine: The Go routine making the call
 //  rssDocument: The rss document to process
 func (this *Expression) FindResults(goRoutine string, rssDocument *rss.RSSDocument) (results interface{}) {
-
 	defer helper.CatchPanic(nil, goRoutine, "expression.Expression", "FindResults")
 
 	// Create a search result for this run
-	searchResult := &_SearchResult{
+	searchResult := &searchResult{
 		Uri:     rssDocument.Uri,
 		Matches: list.New(),
 	}
 
 	for _, rssItem := range rssDocument.Channel.Item {
-
-		for _, expression := range this._Parameters {
-
+		for _, expression := range this.parameters {
 			// Check the title
 			matched, err := regexp.MatchString(expression, rssItem.Title)
 
 			if err != nil {
-
 				helper.WriteStdoutf(goRoutine, "expression.Expression", "FindResults", "ERROR : Title Search : Uri[%s] Expression[%s] Title[%s] : %s", rssDocument.Uri, expression, rssItem.Title, err)
-
 				return searchResult
 			}
 
 			if matched == true {
-
 				// Add the match
-				searchResult.Matches.PushBack(&_SearchMatch{
+				searchResult.Matches.PushBack(&searchMatch{
 					Expression: expression,
 					Field:      "Title",
 					Document:   rssItem,
 				})
 
 				helper.WriteStdoutf(goRoutine, "expression.Expression", "FindResults", "MATCH : Title Search : Uri[%s] Expression[%s] Title[%s]", rssDocument.Uri, expression, rssItem.Title)
-
 				continue
 			}
 
@@ -129,30 +118,25 @@ func (this *Expression) FindResults(goRoutine string, rssDocument *rss.RSSDocume
 			matched, err = regexp.MatchString(expression, rssItem.Description)
 
 			if err != nil {
-
 				helper.WriteStdoutf(goRoutine, "expression.Expression", "FindResults", "ERROR : Description Search : Uri[%s] Expression[%s] Desc[%s] : %s", rssDocument.Uri, expression, rssItem.Description, err)
-
 				return searchResult
 			}
 
 			if matched == true {
-
 				// Add the match
-				searchResult.Matches.PushBack(&_SearchMatch{
+				searchResult.Matches.PushBack(&searchMatch{
 					Expression: expression,
 					Field:      "Description",
 					Document:   rssItem,
 				})
 
 				helper.WriteStdoutf(goRoutine, "expression.Expression", "FindResults", "MATCH : Description Search : Uri[%s] Expression[%s] Title[%s]", rssDocument.Uri, expression, rssItem.Title)
-
 				continue
 			}
 		}
 	}
 
 	if searchResult.Matches.Len() == 0 {
-
 		helper.WriteStdoutf(goRoutine, "expression.Expression", "FindResults", "NOT MATCHED : Uri[%s]", rssDocument.Uri)
 	}
 
@@ -163,24 +147,20 @@ func (this *Expression) FindResults(goRoutine string, rssDocument *rss.RSSDocume
 //  goRoutine: The Go routine making the call
 //  results: The results from the individual FindResult processing
 func (this *Expression) DisplayResults(goRoutine string, results interface{}) {
-
 	helper.WriteStdout(goRoutine, "expression.Expression", "DisplayResults", "Show Results\n")
 
 	// Iterate through the array of search results
 	for _, result := range results.([]interface{}) {
-
 		// Verify we received a result from this feed
 		if result == nil {
-
 			continue
 		}
 
 		// Cast the search result
-		searchResult := result.(*_SearchResult)
+		searchResult := result.(*searchResult)
 
 		for element := searchResult.Matches.Front(); element != nil; element = element.Next() {
-
-			match := element.Value.(*_SearchMatch)
+			match := element.Value.(*searchMatch)
 
 			helper.WriteStdoutf(goRoutine, "expression.Expression", "DisplayResults", "MATCH : *************************************")
 			helper.WriteStdoutf(goRoutine, "expression.Expression", "DisplayResults", "MATCH : Uri[%s] Expression[%s] Field[%s]\n%s\n%s", searchResult.Uri, match.Expression, match.Field, match.Document.Title, match.Document.Description)

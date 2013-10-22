@@ -17,7 +17,6 @@ import (
 //  functionName: The function makeing the call
 //	message: The message to be written
 func WriteStdout(goRoutine string, namespace string, functionName string, message string) {
-
 	fmt.Printf("%s : %s : %s : %s : %s\n", time.Now().Format("2006-01-02T15:04:05.000"), goRoutine, namespace, functionName, message)
 }
 
@@ -28,6 +27,5 @@ func WriteStdout(goRoutine string, namespace string, functionName string, messag
 //  format: The message with formatting information
 //  a: The set of parameters for the formatting
 func WriteStdoutf(goRoutine string, namespace string, functionName string, format string, a ...interface{}) {
-
 	WriteStdout(goRoutine, namespace, functionName, fmt.Sprintf(format, a...))
 }

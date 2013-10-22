@@ -63,13 +63,11 @@ type RSSDocument struct {
 //  goRoutine: The Go routine making the call
 //  uri: The uri of the rss feed to retrieve
 func RetrieveRssFeed(goRoutine string, uri string) (rssDocument *RSSDocument, err error) {
-
 	defer helper.CatchPanic(&err, goRoutine, "rss", "RetrieveRssFeed")
 
 	helper.WriteStdoutf(goRoutine, "rss", "RetrieveRssFeed", "Started : Uri[%s]", uri)
 
 	if uri == "" {
-
 		helper.WriteStdout(goRoutine, "rss", "RetrieveRssFeed", "Completed : No RSS Feed Uri Provided")
 		return nil, errors.New("No RSS Feed Uri Provided")
 	}
@@ -77,13 +75,11 @@ func RetrieveRssFeed(goRoutine string, uri string) (rssDocument *RSSDocument, er
 	resp, err := http.Get(uri)
 
 	if err != nil {
-
 		helper.WriteStdoutf(goRoutine, "rss", "RetrieveRssFeed", "ERROR - Completed : HTTP Get : %s : %s", uri, err)
 		return nil, err
 	}
 
 	defer func() {
-
 		resp.Body.Close()
 		helper.WriteStdoutf(goRoutine, "rss", "RetrieveRssFeed", "Defer Completed : Uri[%s]", uri)
 	}()
@@ -91,7 +87,6 @@ func RetrieveRssFeed(goRoutine string, uri string) (rssDocument *RSSDocument, er
 	rawDocument, err := ioutil.ReadAll(resp.Body)
 
 	if err != nil {
-
 		helper.WriteStdoutf(goRoutine, "rss", "RetrieveRssFeed", "ERROR - Completed : Read Resp : %s : %s", uri, err)
 		return nil, err
 	}
@@ -102,7 +97,6 @@ func RetrieveRssFeed(goRoutine string, uri string) (rssDocument *RSSDocument, er
 	err = decoder.Decode(rssDocument)
 
 	if err != nil {
-
 		helper.WriteStdoutf(goRoutine, "rss", "RetrieveRssFeed", "ERROR - Completed : Decode : %s : %s", uri, err)
 		return nil, err
 	}

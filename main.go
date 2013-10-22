@@ -28,7 +28,6 @@ import (
 
 // main is the entry point for the program
 func main() {
-
 	defer helper.CatchPanic(nil, "System", "main", "Main")
 
 	// Give the server enough threads to work with
@@ -40,7 +39,6 @@ func main() {
 	routines, command, parameters, err := CheckParameters()
 
 	if err != nil {
-
 		helper.WriteStdoutf("System", "main", "Main", "ERROR - Completed : %s", err)
 		return
 	}
@@ -54,12 +52,10 @@ func main() {
 // CheckParameters verifies we have the proper command lines parameters and
 // parses them for use
 func CheckParameters() (routines int, command string, parameters []string, err error) {
-
 	helper.WriteStdoutf("System", "main", "CheckParameters", "Started : Arguments[%d]", len(os.Args))
 
 	// We need at least 4 arguments
 	if len(os.Args) < 4 {
-
 		helper.WriteStdout("System", "main", "CheckParameters", "ERROR : Not Enough Parameters")
 		search.DisplayHelpExamples("System")
 
@@ -70,7 +66,6 @@ func CheckParameters() (routines int, command string, parameters []string, err e
 	routines, err = strconv.Atoi(os.Args[1])
 
 	if err != nil {
-
 		helper.WriteStdout("System", "main", "CheckParameters", "ERROR : Routine Parameter Incorrect Type")
 		search.DisplayHelpExamples("System")
 
@@ -82,7 +77,6 @@ func CheckParameters() (routines int, command string, parameters []string, err e
 	parameters = make([]string, numberOfParameters)
 
 	for parameter := 0; parameter < numberOfParameters; parameter++ {
-
 		parameters[parameter] = os.Args[parameter+3]
 	}
 

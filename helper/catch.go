@@ -18,9 +18,7 @@ import (
 //  namespace: The namespace the call is being made from
 //  functionName: The function makeing the call
 func CatchPanic(err *error, goRoutine string, namespace string, functionName string) {
-
 	if r := recover(); r != nil {
-
 		// Capture the stack trace
 		buf := make([]byte, 10000)
 		runtime.Stack(buf, false)
@@ -28,7 +26,6 @@ func CatchPanic(err *error, goRoutine string, namespace string, functionName str
 		WriteStdoutf(goRoutine, namespace, functionName, "PANIC Defered [%v] : Stack Trace : %v", r, string(buf))
 
 		if err != nil {
-
 			*err = errors.New(fmt.Sprintf("%v", r))
 		}
 	}
