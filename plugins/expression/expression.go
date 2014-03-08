@@ -1,11 +1,11 @@
 // Copyright 2013 Ardan Studios. All rights reserved.
-// Use of this source code is governed by a BSD-style
+// Use of expression source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
 package expression
 
 // Copyright 2013 Ardan Studios. All rights reserved.
-// Use of this source code is governed by a BSD-style
+// Use of expression source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
 /*
@@ -83,17 +83,17 @@ func checkParameters(parameters []string) (result bool) {
 // https://code.google.com/p/re2/source/browse/re2/re2.h
 //  goRoutine: The Go routine making the call
 //  rssDocument: The rss document to process
-func (this *Expression) FindResults(goRoutine string, rssDocument *rss.RSSDocument) (results interface{}) {
+func (expression *Expression) FindResults(goRoutine string, rssDocument *rss.RSSDocument) (results interface{}) {
 	defer helper.CatchPanic(nil, goRoutine, "expression.Expression", "FindResults")
 
-	// Create a search result for this run
+	// Create a search result for expression run
 	searchResult := &searchResult{
 		Uri:     rssDocument.Uri,
 		Matches: list.New(),
 	}
 
 	for _, rssItem := range rssDocument.Channel.Item {
-		for _, expression := range this.parameters {
+		for _, expression := range expression.parameters {
 			// Check the title
 			matched, err := regexp.MatchString(expression, rssItem.Title)
 
@@ -146,12 +146,12 @@ func (this *Expression) FindResults(goRoutine string, rssDocument *rss.RSSDocume
 // DisplayResults implements the SearchPlugin interface for displaying search results
 //  goRoutine: The Go routine making the call
 //  results: The results from the individual FindResult processing
-func (this *Expression) DisplayResults(goRoutine string, results interface{}) {
+func (expression *Expression) DisplayResults(goRoutine string, results interface{}) {
 	helper.WriteStdout(goRoutine, "expression.Expression", "DisplayResults", "Show Results\n")
 
 	// Iterate through the array of search results
 	for _, result := range results.([]interface{}) {
-		// Verify we received a result from this feed
+		// Verify we received a result from expression feed
 		if result == nil {
 			continue
 		}
