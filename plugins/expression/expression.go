@@ -2,17 +2,15 @@
 // Use of expression source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+/*
+Search Plugins must be thread safe. Only one instance of a Search Plugin will be instantiated.
+The FindResults interface method can be called simultaneously by many routines.
+The DisplayResults interface will be called only once.
+*/
+
+// Package expression provides an expression based plugin for searching news.
 package expression
 
-// Copyright 2013 Ardan Studios. All rights reserved.
-// Use of expression source code is governed by a BSD-style
-// license that can be found in the LICENSE file.
-
-/*
-	Search Plugins must be thread safe. Only one instance of a Search Plugin will be instantiated
-	The FindResults interface method can be called simultaneously by many routines
-	The DisplayResults interface will be called only once
-*/
 import (
 	"container/list"
 	"errors"
@@ -21,84 +19,69 @@ import (
 	"regexp"
 )
 
-//** NEW TYPES
-
-// Expression performs regular expression matching
+// Expression performs regular expression matching.
 type Expression struct {
 	parameters []string
 }
 
-// searchMatch contains the result of a successful match
+// searchMatch contains the result of a successful match.
 type searchMatch struct {
-	Expression string      // The expression that was matched
-	Field      string      // The field that was matched in the rss document
-	Document   rss.RSSItem // The item document that was matched
+	Expression string   // The expression that was matched.
+	Field      string   // The field that was matched in the rss document.
+	Document   rss.Item // The item document that was matched.
 }
 
-// searchResult contains the result of a search
+// searchResult contains the result of a search.
 type searchResult struct {
-	Uri     string     // The feed uri that was processed
-	Matches *list.List // A list of the searchMatch objects
+	URI     string     // The feed URI that was processed.
+	Matches *list.List // A list of the searchMatch objects.
 }
-
-//** PUBLIC FUNCTIONS
 
 // New creates a new expression search plugin
-//  goRoutine: The Go routine making the call
-func New(goRoutine string, parameters []string) (expression *Expression, err error) {
+func New(goRoutine string, parameters []string) (*Expression, error) {
 	// Check the parameters are valid
 	result := checkParameters(parameters)
-
 	if result == false {
 		return nil, errors.New("Invalid _Parameters")
 	}
 
 	// Create an expression search plugin
-	expression = &Expression{
+	expression := Expression{
 		parameters: parameters,
 	}
 
-	return expression, nil
+	return &expression, nil
 }
 
-// HelpParameters provides command useage help
+// HelpParameters provides command useage help.
 func HelpParameters() (message string) {
 	return "newssearch 8 expression (?i)spy"
 }
 
-//** PRIVATE METHODS
-
-// CheckParameters reviews the parameters to make sure they are compatible
-//  parameters: The parameters from the command line
+// CheckParameters reviews the parameters to make sure they are compatible.
 func checkParameters(parameters []string) (result bool) {
 	// We accept any parameters
-
 	return true
 }
 
-//** INTERFACE MEMBER FUNCTIONS
-
-// FindResults implements the SearchPlugin interface for processing expression searches
+// FindResults implements the SearchPlugin interface for processing expression searches.
 // https://code.google.com/p/re2/wiki/Syntax
 // https://code.google.com/p/re2/source/browse/re2/re2.h
-//  goRoutine: The Go routine making the call
-//  rssDocument: The rss document to process
-func (expression *Expression) FindResults(goRoutine string, rssDocument *rss.RSSDocument) (results interface{}) {
+func (expression *Expression) FindResults(goRoutine string, document *rss.Document) interface{} {
 	defer helper.CatchPanic(nil, goRoutine, "expression.Expression", "FindResults")
 
 	// Create a search result for expression run
-	searchResult := &searchResult{
-		Uri:     rssDocument.Uri,
+	searchResult := searchResult{
+		URI:     document.URI,
 		Matches: list.New(),
 	}
 
-	for _, rssItem := range rssDocument.Channel.Item {
+	for _, rssItem := range document.Channel.Item {
 		for _, expression := range expression.parameters {
 			// Check the title
 			matched, err := regexp.MatchString(expression, rssItem.Title)
-
 			if err != nil {
-				helper.WriteStdoutf(goRoutine, "expression.Expression", "FindResults", "ERROR : Title Search : Uri[%s] Expression[%s] Title[%s] : %s", rssDocument.Uri, expression, rssItem.Title, err)
+				helper.WriteStdoutf(goRoutine, "expression.Expression", "FindResults", "ERROR : Title Search : URI[%s] Expression[%s] Title[%s] : %s", document.URI, expression, rssItem.Title, err)
 				return searchResult
 			}
 
@@ -110,15 +93,14 @@ func (expression *Expression) FindResults(goRoutine string, rssDocument *rss.RSS
 					Document:   rssItem,
 				})
 
-				helper.WriteStdoutf(goRoutine, "expression.Expression", "FindResults", "MATCH : Title Search : Uri[%s] Expression[%s] Title[%s]", rssDocument.Uri, expression, rssItem.Title)
+				helper.WriteStdoutf(goRoutine, "expression.Expression", "FindResults", "MATCH : Title Search : URI[%s] Expression[%s] Title[%s]", document.URI, expression, rssItem.Title)
 				continue
 			}
 
 			// Check the description
 			matched, err = regexp.MatchString(expression, rssItem.Description)
-
 			if err != nil {
-				helper.WriteStdoutf(goRoutine, "expression.Expression", "FindResults", "ERROR : Description Search : Uri[%s] Expression[%s] Desc[%s] : %s", rssDocument.Uri, expression, rssItem.Description, err)
+				helper.WriteStdoutf(goRoutine, "expression.Expression", "FindResults", "ERROR : Description Search : URI[%s] Expression[%s] Desc[%s] : %s", document.URI, expression, rssItem.Description, err)
 				return searchResult
 			}
 
@@ -130,22 +112,20 @@ func (expression *Expression) FindResults(goRoutine string, rssDocument *rss.RSS
 					Document:   rssItem,
 				})
 
-				helper.WriteStdoutf(goRoutine, "expression.Expression", "FindResults", "MATCH : Description Search : Uri[%s] Expression[%s] Title[%s]", rssDocument.Uri, expression, rssItem.Title)
+				helper.WriteStdoutf(goRoutine, "expression.Expression", "FindResults", "MATCH : Description Search : URI[%s] Expression[%s] Title[%s]", document.URI, expression, rssItem.Title)
 				continue
 			}
 		}
 	}
 
 	if searchResult.Matches.Len() == 0 {
-		helper.WriteStdoutf(goRoutine, "expression.Expression", "FindResults", "NOT MATCHED : Uri[%s]", rssDocument.Uri)
+		helper.WriteStdoutf(goRoutine, "expression.Expression", "FindResults", "NOT MATCHED : URI[%s]", document.URI)
 	}
 
-	return searchResult
+	return &searchResult
 }
 
-// DisplayResults implements the SearchPlugin interface for displaying search results
-//  goRoutine: The Go routine making the call
-//  results: The results from the individual FindResult processing
+// DisplayResults implements the SearchPlugin interface for displaying search results.
 func (expression *Expression) DisplayResults(goRoutine string, results interface{}) {
 	helper.WriteStdout(goRoutine, "expression.Expression", "DisplayResults", "Show Results\n")
 
@@ -163,7 +143,7 @@ func (expression *Expression) DisplayResults(goRoutine string, results interface
 			match := element.Value.(*searchMatch)
 
 			helper.WriteStdoutf(goRoutine, "expression.Expression", "DisplayResults", "MATCH : *************************************")
-			helper.WriteStdoutf(goRoutine, "expression.Expression", "DisplayResults", "MATCH : Uri[%s] Expression[%s] Field[%s]\n%s\n%s", searchResult.Uri, match.Expression, match.Field, match.Document.Title, match.Document.Description)
+			helper.WriteStdoutf(goRoutine, "expression.Expression", "DisplayResults", "MATCH : URI[%s] Expression[%s] Field[%s]\n%s\n%s", searchResult.URI, match.Expression, match.Field, match.Document.Title, match.Document.Description)
 			helper.WriteStdoutf(goRoutine, "expression.Expression", "DisplayResults", "MATCH : *************************************\n\n")
 		}
 	}
